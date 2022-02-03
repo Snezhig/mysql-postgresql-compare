@@ -1,0 +1,40 @@
+doctrine:
+  dbal:
+    default_connection: default
+    connections:
+      default:
+        # configure these for your database server
+        host: postgres
+        dbname: '%env(resolve:DB_NAME)%'
+        user: '%env(resolve:DB_USER)%'
+        password: '%env(resolve:DB_PASSWORD)%'
+        driver: 'pdo_pgsql'
+
+      mysql:
+        # configure these for your database server
+        host: mysql
+        dbname: '%env(resolve:DB_NAME)%'
+        user: '%env(resolve:DB_USER)%'
+        password: '%env(resolve:DB_PASSWORD)%'
+        driver: 'pdo_mysql'
+  orm:
+    default_entity_manager: default
+    entity_managers:
+      default:
+        connection: default
+        mappings:
+          Postgres:
+            is_bundle: false
+            type: attribute
+            dir: '%kernel.project_dir%/src/Entity/Postgres'
+            prefix: 'App\Entity\Postgres'
+            alias: Postgres
+      mysql:
+        connection: mysql
+        mappings:
+          Mysql:
+            is_bundle: false
+            type: attribute
+            dir: '%kernel.project_dir%/src/Entity/Mysql'
+            prefix: 'App\Entity\Mysql'
+            alias: Mysql
