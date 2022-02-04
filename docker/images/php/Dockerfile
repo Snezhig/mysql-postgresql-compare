@@ -9,6 +9,9 @@ RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local
 RUN docker-php-ext-install pdo pdo_mysql pdo_pgsql
 RUN pecl install xdebug
 RUN docker-php-ext-enable xdebug
+
+COPY php.ini                       $PHP_INI_DIR/php.ini
 COPY conf.d                        $PHP_INI_DIR/conf.d/
+
 RUN usermod -u 1000 www-data
 RUN mkdir -p /var/www/.composer && chown www-data:www-data /var/www/.composer

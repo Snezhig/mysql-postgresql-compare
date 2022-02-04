@@ -4,7 +4,7 @@ namespace App\Entity\Postgres;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity()]
-class Product
+class Product implements \App\Entity\Product
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
