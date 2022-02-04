@@ -19,9 +19,14 @@ doctrine:
         driver: 'pdo_mysql'
   orm:
     default_entity_manager: default
+
     entity_managers:
       default:
         connection: default
+        dql:
+          string_functions:
+            JSON_GET_TEXT: Scienta\DoctrineJsonFunctions\Query\AST\Functions\Postgresql\JsonGetText
+            CAST: Oro\ORM\Query\AST\Functions\Cast
         mappings:
           Postgres:
             is_bundle: false
@@ -31,6 +36,11 @@ doctrine:
             alias: Postgres
       mysql:
         connection: mysql
+        dql:
+          string_functions:
+            JSON_EXTRACT: Scienta\DoctrineJsonFunctions\Query\AST\Functions\Mysql\JsonExtract
+            JSON_SEARCH: Scienta\DoctrineJsonFunctions\Query\AST\Functions\Mysql\JsonSearch
+            JSON_CONTAINS: Scienta\DoctrineJsonFunctions\Query\AST\Functions\Mysql\JsonContains
         mappings:
           Mysql:
             is_bundle: false

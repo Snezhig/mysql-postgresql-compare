@@ -106,6 +106,9 @@
     "nikic/php-parser": {
         "version": "v4.13.2"
     },
+    "oro/doctrine-extensions": {
+        "version": "2.0.1"
+    },
     "psr/cache": {
         "version": "3.0.0"
     },
@@ -117,6 +120,9 @@
     },
     "psr/log": {
         "version": "3.0.0"
+    },
+    "scienta/doctrine-json-functions": {
+        "version": "5.0.0"
     },
     "symfony/cache": {
         "version": "v6.0.3"
