@@ -17,6 +17,8 @@ services:
       - ./docker/.data/postgresql:/var/lib/postgresql/data
     networks:
       - app
+    ports:
+      - "${DC_POSTGRES_PORT}:5432"
     command: [
       "postgres",
       "-c", "random_page_cost=1.1",
@@ -42,6 +44,8 @@ services:
       - ./docker/.data/mysql:/var/lib/mysql
     networks:
       - app
+    ports:
+      - "${DC_MYSQL_PORT}:3306"
     environment:
       MYSQL_USER: ${DB_USER}
       MYSQL_PASSWORD: ${DB_PASSWORD}

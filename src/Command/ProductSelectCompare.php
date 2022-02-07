@@ -4,11 +4,12 @@ namespace App\Command;
 
 use App\Entity\Mysql\Product as ProductMysql;
 use App\Entity\Postgres\Product as ProductPostgresql;
-use Doctrine\ORM\Query\Parameter;
+use Doctrine\DBAL\Logging\DebugStack;
 use Doctrine\ORM\QueryBuilder;
 use JetBrains\PhpStorm\ArrayShape;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\Table;
+use Symfony\Component\Console\Helper\TableCell;
 use Symfony\Component\Console\Helper\TableSeparator;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -34,15 +35,49 @@ class ProductSelectCompare extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $this->output = $output;
+        $items = [
+            [
+                'p' => "p0_.name LIKE '%uo%'",
+                'm' => "p0_.name LIKE '%uo%'"
+            ],
+            [
+                'p' => "(p0_.properties ->> 'p_1')::int = 4512",
+                'm' => "JSON_CONTAINS(p0_.properties, '4512', '$.p_1') = 1"
+            ],
+            [
+                'p' => "(p0_.properties @> '{\"p_1\": 4512}')",
+                'm' => "JSON_CONTAINS(p0_.properties, '4512', '$.p_1') = 1"
+            ],
+            [
+                'p' => "(p0_.properties ->> 'p_1')::int > 4512",
+                'm' => "JSON_EXTRACT(p0_.properties, '$.p_1') > 4512",
+            ],
+            [
+                'p' => "p0_.properties ->> 'p_6' = 'aliquam'",
+                'm' => "JSON_CONTAINS(p0_.properties, '\"aliquam\"', '$.p_6') = 1"
+            ],
+            [
+                'p' => "p0_.properties @> '{\"p_6\": \"aliquam\"}'",
+                'm' => "JSON_CONTAINS(p0_.properties, '\"aliquam\"', '$.p_6') = 1"
+            ],
+            [
+                'p' => "(properties -> 'p_1338')::float > 4539.52",
+                'm' => "JSON_EXTRACT(p0_.properties, '$.p_1338') > 4539.52",
+            ],
+            [
+                'p' => "
+                (properties -> 'p_1338')::float > 4539.52 
+                and 
+                p0_.properties @> '{\"p_6\": \"aliquam\"}'",
+                'm' => "
+                JSON_EXTRACT(p0_.properties, '$.p_1338') > 4539.52 
+                and 
+                JSON_CONTAINS(p0_.properties, '\"aliquam\"', '$.p_6') = 1",
+            ],
 
+        ];
 
-        $results = $this->compare([
-            ['where' => [], 'params' => []],
-            ['where' => ['p.name like :s'], 'params' => ['s' => '%uo%']],
-            ['where' => [['p_1', '=', ':p_1']], 'params' => ['p_1' => 4512]],
-            ['where' => [['p_1', '>', ':p_1']], 'params' => ['p_1' => 4512]],
-            ['where' => [['p_6', '=', ':p_6']], 'params' => ['p_6' => 'aliquam']],
-        ]);
+        $results = $this->compare($items);
 
         $this->write($results);
 
@@ -54,41 +89,21 @@ class ProductSelectCompare extends Command
         $results = [];
         foreach ($items as $item) {
             $results[] = [
-                'mysql'      => $this->execMysql($item['where'], $item['params']),
-                'postgresql' => $this->execPostgres($item['where'], $item['params']),
+                'mysql'      => $this->execMysql($item['m']),
+                'postgresql' => $this->execPostgres($item['p']),
             ];
         }
         return $results;
 
     }
 
-    private function execMysql(array $where, array $parameters): array
+    #[ArrayShape(['result' => "array", 'time' => "float", 'sql' => "string"])]
+    private function execMysql(string $where): array
     {
         $builder = $this->registry->getManager('mysql')->createQueryBuilder();
 
-        $where = array_map(static function (array|string $item) use (&$parameters) {
-            if (is_string($item)) {
-                return $item;
-            }
-
-            switch ($item[1]) {
-                case '=':
-                    $key = str_replace(':', '', $item[2]);
-                    $value = $parameters[$key];
-                    $value = is_string($value) ? "\"$value\"" : $value;
-                    $where = "JSON_CONTAINS(p.properties, '$value', '$.{$item[0]}') = 1";
-                    unset($parameters[$key]);
-                    break;
-                default:
-                    $where = "JSON_EXTRACT(p.properties, '$.{$item[0]}') {$item[1]} {$item[2]}";
-            }
-            return $where;
-        }
-            , $where);
-
         return $this->exec(
             $where,
-            $parameters,
             $builder,
             ProductMysql::class
         );
@@ -99,25 +114,17 @@ class ProductSelectCompare extends Command
         'time'   => 'float',
         'sql'    => 'string'
     ])]
-    private function exec(array $where, array $parameters, QueryBuilder $builder, string $class): array
+    private function exec(string $where, QueryBuilder $builder, string $class): array
     {
-
         $q = $builder->select('p.id')->from($class, 'p');
-
-        foreach ($where as $predicates) {
-            $q->where($predicates);
-        }
-        $q->setParameters($parameters);
-        $result = [
-            'sql' => sprintf(
-                str_replace('?', '%s', $q->getQuery()->getSQL()),
-                ...$q->getQuery()->getParameters()->map(static fn(Parameter $p) => $p->getValue())->getValues()
-            )
-        ];
-        $time = microtime(true);
+        $sql = $q->getQuery()->getSQL() . ' WHERE ' . $where;
+        $result = ['sql' => $sql];
+        $stack = new DebugStack();
+        $connection = $builder->getEntityManager()->getConnection();
+        $connection->getConfiguration()->setSQLLogger($stack);
         try {
-            $result['result'] = $q->getQuery()->execute();
-            $result['time'] = microtime(true) - $time;
+            $result['result'] = $connection->executeQuery($sql)->fetchAllAssociative();
+            $result['time'] = current($stack->queries)['executionMS'];
         } catch (\Throwable $e) {
             $this->output->writeln($result['sql']);
             throw  $e;
@@ -126,25 +133,12 @@ class ProductSelectCompare extends Command
     }
 
     #[ArrayShape(['result' => "array", 'time' => "float"])]
-    private function execPostgres(array $where, array $parameters): array
+    private function execPostgres(string $where): array
     {
         $builder = $this->registry->getManager()->createQueryBuilder();
-        $gettype = static fn($key) => gettype($parameters[str_replace(':', '', $key)]);
-        $where = array_map(static function (array|string $item) use ($gettype) {
 
-            if (is_string($item)) {
-                return $item;
-            }
-
-            $where = "JSON_GET_TEXT(p.properties, '{$item[0]}')";
-            if ($item[1] !== '=' && $gettype($item[2]) === 'integer') {
-                $where = "CAST ($where AS INTEGER)";
-            }
-            return "$where {$item[1]} {$item[2]}";
-        }, $where);
         return $this->exec(
             $where,
-            $parameters,
             $builder,
             ProductPostgresql::class
         );
@@ -153,20 +147,26 @@ class ProductSelectCompare extends Command
     private function write(array $results)
     {
         $table = new Table($this->output);
-        $table->setHeaders(['type', 'count', 'time', 'diff', 'sql']);
+        $table->setHeaders(['#', 'type', 'count', 'time', 'diff', 'sql']);
         $table->setHeaderTitle('Results');
-        foreach ($results as $result) {
+        foreach ($results as $i => $result) {
+            $number = new TableCell($i + 1, ['rowspan' => 2]);
             foreach ($result as $type => $data) {
-                $table->addRow([
+                $row = [
                     $type,
                     count($data['result']),
                     $data['time'],
                     match ($type) {
-                        'mysql' => (1 - $result['mysql']['time'] / $result['postgresql']['time']) * 100,
-                        'postgresql' => (1 - $result['postgresql']['time'] / $result['mysql']['time']) * 100,
+                        'mysql' => round((1 - $result['mysql']['time'] / $result['postgresql']['time']) * 100, 2),
+                        'postgresql' => round((1 - $result['postgresql']['time'] / $result['mysql']['time']) * 100, 2),
                     },
                     $data['sql']
-                ]);
+                ];
+                if ($number) {
+                    array_unshift($row, $number);
+                    $number = null;
+                }
+                $table->addRow($row);
             }
             $table->addRow(new TableSeparator());
         }
