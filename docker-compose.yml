@@ -15,23 +15,14 @@ services:
     image: postgres:14.1
     volumes:
       - ./docker/.data/postgresql:/var/lib/postgresql/data
+      - ./docker/images/postgresql/base.conf:/usr/share/postgresql/postgresql.conf
     networks:
       - app
     ports:
       - "${DC_POSTGRES_PORT}:5432"
     command: [
       "postgres",
-      "-c", "random_page_cost=1.1",
-      "-c", "default_statistics_target=100",
-      "-c", "effective_io_concurrency=200",
-      "-c", "shared_buffers=4GB",
-      "-c", "work_mem=2GB",
-      "-c", "maintenance_work_mem=1GB",
-      "-c", "effective_cache_size=11GB",
-      "-c", "max_worker_processes=14",
-      "-c", "max_parallel_workers_per_gather=4",
-      "-c", "max_parallel_workers=14",
-      "-c", "max_parallel_maintenance_workers=4",
+      "-c", "config_file=/usr/share/postgresql/postgresql.conf",
     ]
     environment:
       POSTGRES_USER: ${DB_USER}
@@ -39,9 +30,11 @@ services:
       POSTGRES_DB: ${DB_NAME}
 
   mysql:
-    image: mysql:8.0
+    build:
+      context: docker/images/mysql
     volumes:
       - ./docker/.data/mysql:/var/lib/mysql
+      - ./docker/images/mysql/conf.d/base.cnf:/etc/mysql/conf.d/base.cnf
     networks:
       - app
     ports:

@@ -1,5 +1,5 @@
 table_storage:
   table_name: migration_versions
 migrations_paths:
-  'MysqlMigration': 'migrations/postgresql'
+  'PostgresqlMigration': 'migrations/postgresql'
 em: 'default'

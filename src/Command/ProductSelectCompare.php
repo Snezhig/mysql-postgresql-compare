@@ -2,10 +2,9 @@
 
 namespace App\Command;
 
-use App\Entity\Mysql\Product as ProductMysql;
-use App\Entity\Postgres\Product as ProductPostgresql;
-use Doctrine\DBAL\Logging\DebugStack;
-use Doctrine\ORM\QueryBuilder;
+use App\Helper\MysqlWhereHelper;
+use App\Helper\PostgresqlWhereHelper;
+use App\Service\SqlSelectService;
 use JetBrains\PhpStorm\ArrayShape;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\Table;
@@ -22,7 +21,9 @@ class ProductSelectCompare extends Command
 
 
     public function __construct(
-        private \Doctrine\Persistence\ManagerRegistry $registry
+        private PostgresqlWhereHelper $postgresqlWhereHelper,
+        private MysqlWhereHelper      $mysqlWhereHelper,
+        private SqlSelectService      $service
     ) {
         parent::__construct();
     }
@@ -34,79 +35,47 @@ class ProductSelectCompare extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $this->output = $output;
-        $items = [
-            [
-                'p' => "p0_.name LIKE '%uo%'",
-                'm' => "p0_.name LIKE '%uo%'"
-            ],
-            [
-                'p' => "(p0_.properties ->> 'p_1')::int = 4512",
-                'm' => "JSON_CONTAINS(p0_.properties, '4512', '$.p_1') = 1"
-            ],
-            [
-                'p' => "(p0_.properties @> '{\"p_1\": 4512}')",
-                'm' => "JSON_CONTAINS(p0_.properties, '4512', '$.p_1') = 1"
-            ],
-            [
-                'p' => "(p0_.properties ->> 'p_1')::int > 4512",
-                'm' => "JSON_EXTRACT(p0_.properties, '$.p_1') > 4512",
-            ],
-            [
-                'p' => "p0_.properties ->> 'p_6' = 'aliquam'",
-                'm' => "JSON_CONTAINS(p0_.properties, '\"aliquam\"', '$.p_6') = 1"
-            ],
-            [
-                'p' => "p0_.properties @> '{\"p_6\": \"aliquam\"}'",
-                'm' => "JSON_CONTAINS(p0_.properties, '\"aliquam\"', '$.p_6') = 1"
-            ],
-            [
-                'p' => "(properties -> 'p_1338')::float > 4539.52",
-                'm' => "JSON_EXTRACT(p0_.properties, '$.p_1338') > 4539.52",
-            ],
-            [
-                'p' => "
-                (properties -> 'p_1338')::float > 4539.52 
-                and 
-                p0_.properties @> '{\"p_6\": \"aliquam\"}'",
-                'm' => "
-                JSON_EXTRACT(p0_.properties, '$.p_1338') > 4539.52 
-                and 
-                JSON_CONTAINS(p0_.properties, '\"aliquam\"', '$.p_6') = 1",
-            ],
-
+        $filters = [
+            ['name_like', 'name_like'],
+            ['json_int_eq', 'json_int_eq'],
+            ['json_int_eq_ext', 'json_int_eq'],
+            ['json_int_gt', 'json_int_gt'],
+            ['json_string_contains', 'json_string_contains'],
+            ['json_string_contains_ex', 'json_string_contains'],
+            ['json_float_gt', 'json_float_gt'],
+            ['json_float_gt_and_string', 'json_float_gt_and_string'],
+            ['json_float_gt_and_not_string', 'json_float_gt_and_not_string'],
+            ['json_float_gt_int_lte_string_like', 'json_float_gt_int_lte_string_like'],
         ];
 
-        $results = $this->compare($items);
+        $this->output = $output;
+
+        $results = $this->compare($filters);
 
         $this->write($results);
 
         return 1;
     }
 
-    public function compare($items): array
+    public function compare(array $filters): array
     {
         $results = [];
-        foreach ($items as $item) {
+        foreach ($filters as $item) {
+            $mysql = $this->service
+                ->setWhereHelper($this->mysqlWhereHelper)
+                ->only([$item[1]])
+                ->execute();
+            $postgresql = $this->service
+                ->setWhereHelper($this->postgresqlWhereHelper)
+                ->only([$item[0]])
+                ->execute();
             $results[] = [
-                'mysql'      => $this->execMysql($item['m']),
-                'postgresql' => $this->execPostgres($item['p']),
+                'mysql'      => current($mysql),
+                'postgresql' => current($postgresql),
             ];
         }
         return $results;
 
-    }
-
-    #[ArrayShape(['result' => "array", 'time' => "float", 'sql' => "string"])]
-    private function execMysql(string $where): array
-    {
-        $builder = $this->registry->getManager('mysql')->createQueryBuilder();
-
-        return $this->exec(
-            $where,
-            $builder,
-            ProductMysql::class
-        );
     }
 
     #[ArrayShape([
@@ -114,36 +83,6 @@ class ProductSelectCompare extends Command
         'time'   => 'float',
         'sql'    => 'string'
     ])]
-    private function exec(string $where, QueryBuilder $builder, string $class): array
-    {
-        $q = $builder->select('p.id')->from($class, 'p');
-        $sql = $q->getQuery()->getSQL() . ' WHERE ' . $where;
-        $result = ['sql' => $sql];
-        $stack = new DebugStack();
-        $connection = $builder->getEntityManager()->getConnection();
-        $connection->getConfiguration()->setSQLLogger($stack);
-        try {
-            $result['result'] = $connection->executeQuery($sql)->fetchAllAssociative();
-            $result['time'] = current($stack->queries)['executionMS'];
-        } catch (\Throwable $e) {
-            $this->output->writeln($result['sql']);
-            throw  $e;
-        }
-        return $result;
-    }
-
-    #[ArrayShape(['result' => "array", 'time' => "float"])]
-    private function execPostgres(string $where): array
-    {
-        $builder = $this->registry->getManager()->createQueryBuilder();
-
-        return $this->exec(
-            $where,
-            $builder,
-            ProductPostgresql::class
-        );
-    }
-
     private function write(array $results)
     {
         $table = new Table($this->output);
@@ -154,7 +93,7 @@ class ProductSelectCompare extends Command
             foreach ($result as $type => $data) {
                 $row = [
                     $type,
-                    count($data['result']),
+                    count($data['data']),
                     $data['time'],
                     match ($type) {
                         'mysql' => round((1 - $result['mysql']['time'] / $result['postgresql']['time']) * 100, 2),
