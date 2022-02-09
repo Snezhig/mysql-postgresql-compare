@@ -4,7 +4,7 @@ namespace App\Helper;
 
 use App\Enum\JsonColumnEnum;
 
-abstract class AbstractSqlWhereHelper implements SqlWhereHelper
+abstract class AbstractSqlPredicateHelper implements SqlPredicateHelper
 {
     protected function prepare(array $where): array
     {

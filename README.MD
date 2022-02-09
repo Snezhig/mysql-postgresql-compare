@@ -24,8 +24,8 @@ php bin/console app:product:fixture:prepare
 * Apply fixtures
 
 ```bash
-php bin/console doctrine:fixtures:load --group=postgres
-php bin/console doctrine:fixtures:load --group=mysql --em=mysql
+php bin/console doctrine:fixtures:load
+php bin/console doctrine:fixtures:load --em=mysql
 ```
 
 * Run command to compare:

@@ -2,4 +2,4 @@ table_storage:
   table_name: migration_versions
 migrations_paths:
   'PostgresqlMigration': 'migrations/postgresql'
-em: 'default'
+em: 'postgres'

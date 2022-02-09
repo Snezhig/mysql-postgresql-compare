@@ -2,20 +2,20 @@
 
 namespace App\Helper;
 
-use App\Entity\Postgres\Product;
 use Doctrine\Common\Collections\ArrayCollection;
 
-class PostgresqlWhereHelper extends AbstractSqlWhereHelper
+class PostgresqlPredicateHelper extends AbstractSqlPredicateHelper
 {
-
-    public function getEntityClassName(): string
+    public function getConnectionName(): string
     {
-        return Product::class;
+        return 'postgres';
     }
 
-    public function getManagerName(): string
+    public function getSelect(): array
     {
-        return 'default';
+        return [
+            'id',
+        ];
     }
 
     public function getWhereCollection(): ArrayCollection
@@ -29,6 +29,21 @@ class PostgresqlWhereHelper extends AbstractSqlWhereHelper
             'json_string_contains'     => "properties ->> '#string#' = '#string_v#'",
             'json_string_contains_ex'  => "properties @> '{\"#string#\": \"#string_v#\"}'",
             'json_float_gt'            => "(properties -> '#float#')::float > #float_v#",
+
+            'name_like_json_int_lte' => "
+            name like '%us%'
+            and
+            (properties ->> '#int#')::int <= #int_v#
+            ",
+
+            'name_like_json_int_lte_string_contains' => "
+            name like '%us%'
+            and
+            (properties ->> '#int#')::int <= #int_v#
+            and
+            properties @> '{\"#string#\": \"#string_v#\"}'
+            ",
+
             'json_float_gt_and_string' => "
             (properties -> '#float#')::float > #float_v#
             and

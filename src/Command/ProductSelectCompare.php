@@ -2,9 +2,9 @@
 
 namespace App\Command;
 
-use App\Helper\MysqlWhereHelper;
-use App\Helper\PostgresqlWhereHelper;
-use App\Service\SqlSelectService;
+use App\Helper\MysqlPredicateHelper;
+use App\Helper\PostgresqlPredicateHelper;
+use App\Service\ProductSqlSelectService;
 use JetBrains\PhpStorm\ArrayShape;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\Table;
@@ -21,9 +21,9 @@ class ProductSelectCompare extends Command
 
 
     public function __construct(
-        private PostgresqlWhereHelper $postgresqlWhereHelper,
-        private MysqlWhereHelper      $mysqlWhereHelper,
-        private SqlSelectService      $service
+        private PostgresqlPredicateHelper $postgresqlWhereHelper,
+        private MysqlPredicateHelper      $mysqlWhereHelper,
+        private ProductSqlSelectService   $service
     ) {
         parent::__construct();
     }
@@ -46,6 +46,8 @@ class ProductSelectCompare extends Command
             ['json_float_gt_and_string', 'json_float_gt_and_string'],
             ['json_float_gt_and_not_string', 'json_float_gt_and_not_string'],
             ['json_float_gt_int_lte_string_like', 'json_float_gt_int_lte_string_like'],
+            ['name_like_json_int_lte', 'name_like_json_int_lte'],
+            ['name_like_json_int_lte_string_contains', 'name_like_json_int_lte_string_contains'],
         ];
 
         $this->output = $output;

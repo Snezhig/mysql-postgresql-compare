@@ -1,33 +1,32 @@
 <?php
 
-namespace App\Fixture\Product;
+namespace App\Fixture;
 
 use App\Entity\Product;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
-use Faker\Factory;
+use JsonException;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\HttpKernel\KernelInterface;
+use Traversable;
 
-abstract class ProductAbstractFixture extends Fixture
+class ProductFixture extends Fixture
 {
-    private $faker;
 
     public function __construct(
         private KernelInterface $kernel
     ) {
-        $this->faker = Factory::create();
     }
 
-    public function load(ObjectManager $manager)
+    public function load(ObjectManager $manager): void
     {
         $manager->getConnection()->getConfiguration()->setSQLLogger(null);
 
         foreach ($this->getData() as $items) {
             foreach ($items as $item) {
-                $product = $this->getEntity();
-                $product->setName($item['name'])
-                        ->setProperties($item['props']);
+                $product = (new Product())
+                    ->setName($item['name'])
+                    ->setProperties($item['props']);
                 $manager->persist($product);
             }
             $manager->flush();
@@ -36,15 +35,23 @@ abstract class ProductAbstractFixture extends Fixture
 
     }
 
-    private function getData(): \Traversable
+    /**
+     * @return Traversable
+     * @throws JsonException
+     */
+    private function getData(): Traversable
     {
         $finder = new Finder();
         $finder->files()->in($this->kernel->getProjectDir() . '/files/fixtures')->sortByName(true);
         foreach ($finder as $file) {
-            yield json_decode($file->getContents(), true, 512, JSON_THROW_ON_ERROR);
+            yield json_decode(
+                $file->getContents(),
+                true,
+                512,
+                JSON_THROW_ON_ERROR
+            );
         }
 
     }
 
-    abstract protected function getEntity(): Product;
 }

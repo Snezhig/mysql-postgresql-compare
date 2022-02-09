@@ -4,12 +4,11 @@ namespace App\Helper;
 
 use Doctrine\Common\Collections\ArrayCollection;
 
-interface SqlWhereHelper
+interface SqlPredicateHelper
 {
-    public function getEntityClassName(): string;
-
-    public function getManagerName(): string;
+    public function getConnectionName(): string;
 
     public function getWhereCollection(): ArrayCollection;
 
+    public function getSelect(): array;
 }

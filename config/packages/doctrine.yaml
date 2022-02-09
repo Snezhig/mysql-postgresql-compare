@@ -1,8 +1,8 @@
 doctrine:
   dbal:
-    default_connection: default
+    default_connection: postgres
     connections:
-      default:
+      postgres:
         # configure these for your database server
         host: postgres
         dbname: '%env(resolve:DB_NAME)%'
@@ -18,34 +18,24 @@ doctrine:
         password: '%env(resolve:DB_PASSWORD)%'
         driver: 'pdo_mysql'
   orm:
-    default_entity_manager: default
+    default_entity_manager: postgres
 
     entity_managers:
-      default:
-        connection: default
-        dql:
-          string_functions:
-            JSON_GET_TEXT: Scienta\DoctrineJsonFunctions\Query\AST\Functions\Postgresql\JsonGetText
-            JSONB_CONTAINS: Scienta\DoctrineJsonFunctions\Query\AST\Functions\Postgresql\JsonbContains
-            CAST: Oro\ORM\Query\AST\Functions\Cast
+      postgres:
+        connection: postgres
         mappings:
           Postgres:
             is_bundle: false
             type: attribute
-            dir: '%kernel.project_dir%/src/Entity/Postgres'
-            prefix: 'App\Entity\Postgres'
+            dir: '%kernel.project_dir%/src/Entity'
+            prefix: 'App\Entity'
             alias: Postgres
       mysql:
         connection: mysql
-        dql:
-          string_functions:
-            JSON_EXTRACT: Scienta\DoctrineJsonFunctions\Query\AST\Functions\Mysql\JsonExtract
-            JSON_SEARCH: Scienta\DoctrineJsonFunctions\Query\AST\Functions\Mysql\JsonSearch
-            JSON_CONTAINS: Scienta\DoctrineJsonFunctions\Query\AST\Functions\Mysql\JsonContains
         mappings:
           Mysql:
             is_bundle: false
             type: attribute
-            dir: '%kernel.project_dir%/src/Entity/Mysql'
-            prefix: 'App\Entity\Mysql'
+            dir: '%kernel.project_dir%/src/Entity'
+            prefix: 'App\Entity'
             alias: Mysql
