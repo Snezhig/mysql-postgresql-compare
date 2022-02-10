@@ -5,6 +5,7 @@ namespace App\Command;
 use App\Helper\MysqlPredicateHelper;
 use App\Helper\PostgresqlPredicateHelper;
 use App\Service\ProductSqlSelectService;
+use App\Setting\SqlCompareValueSetting;
 use JetBrains\PhpStorm\ArrayShape;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\Table;
@@ -23,7 +24,7 @@ class ProductSelectCompare extends Command
     public function __construct(
         private PostgresqlPredicateHelper $postgresqlWhereHelper,
         private MysqlPredicateHelper      $mysqlWhereHelper,
-        private ProductSqlSelectService   $service
+        private ProductSqlSelectService   $service,
     ) {
         parent::__construct();
     }
@@ -88,19 +89,25 @@ class ProductSelectCompare extends Command
     private function write(array $results)
     {
         $table = new Table($this->output);
-        $table->setHeaders(['#', 'type', 'count', 'time', 'diff', 'sql']);
+        $table->setHeaders(['#', 'type', 'count', 'time', 'sql']);
         $table->setHeaderTitle('Results');
         foreach ($results as $i => $result) {
             $number = new TableCell($i + 1, ['rowspan' => 2]);
+
             foreach ($result as $type => $data) {
+                $diff = $type === 'postgresql'
+                    ? sprintf(
+                        " (%s%s)",
+                        round(
+                            (1 - $result['postgresql']['time'] / $result['mysql']['time']) * 100,
+                            2
+                        ), '%')
+                    : '';
+
                 $row = [
                     $type,
                     count($data['data']),
-                    $data['time'],
-                    match ($type) {
-                        'mysql' => round((1 - $result['mysql']['time'] / $result['postgresql']['time']) * 100, 2),
-                        'postgresql' => round((1 - $result['postgresql']['time'] / $result['mysql']['time']) * 100, 2),
-                    },
+                    round($data['time'], 4) . $diff,
                     $data['sql']
                 ];
                 if ($number) {

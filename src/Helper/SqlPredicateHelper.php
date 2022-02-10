@@ -2,6 +2,7 @@
 
 namespace App\Helper;
 
+use App\Setting\SqlCompareValueSetting;
 use Doctrine\Common\Collections\ArrayCollection;
 
 interface SqlPredicateHelper
@@ -11,4 +12,6 @@ interface SqlPredicateHelper
     public function getWhereCollection(): ArrayCollection;
 
     public function getSelect(): array;
+
+    public function getValueSetting(): SqlCompareValueSetting;
 }
