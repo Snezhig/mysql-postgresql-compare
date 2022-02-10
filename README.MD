@@ -34,4 +34,18 @@ php bin/console doctrine:fixtures:load --em=mysql
 php bin/console app:product:select:compare
 ```
 
+---
 
+# Api
+
+## Select
+
+* Path:
+    * `[GET]/api/compare/select/types` - return types
+    * `[GET]/api/compare/select/{type}?values=<array>` - return where predicates for type with values
+    * `[POST]/api/compare/select/{type}?values=<array>&?only=<array>` - return queries results
+* Query params:
+    * values = [int => integer, string => string, float => float]
+    * only = array[keys of predicates]
+
+---
