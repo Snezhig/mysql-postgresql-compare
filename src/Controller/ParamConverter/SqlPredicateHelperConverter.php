@@ -20,7 +20,7 @@ class SqlPredicateHelperConverter implements ParamConverterInterface
     }
 
     #[ParamConverter]
-    public function apply(Request $request, ParamConverter $configuration)
+    public function apply(Request $request, ParamConverter $configuration): void
     {
         $type = $request->attributes->get('type');
         $helper = match (CompareControllerPathEnum::from($type)) {
@@ -54,7 +54,7 @@ class SqlPredicateHelperConverter implements ParamConverterInterface
         }
     }
 
-    public function supports(ParamConverter $configuration)
+    public function supports(ParamConverter $configuration): bool
     {
         return $configuration->getClass() === SqlPredicateHelper::class;
     }

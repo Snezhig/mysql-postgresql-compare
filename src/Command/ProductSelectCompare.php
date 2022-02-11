@@ -65,11 +65,11 @@ class ProductSelectCompare extends Command
         $results = [];
         foreach ($filters as $item) {
             $mysql = $this->service
-                ->setWhereHelper($this->mysqlWhereHelper)
+                ->setPredicateHelper($this->mysqlWhereHelper)
                 ->only([$item[1]])
                 ->execute();
             $postgresql = $this->service
-                ->setWhereHelper($this->postgresqlWhereHelper)
+                ->setPredicateHelper($this->postgresqlWhereHelper)
                 ->only([$item[0]])
                 ->execute();
             $results[] = [

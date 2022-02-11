@@ -60,4 +60,22 @@ class MysqlPredicateHelper extends AbstractSqlPredicateHelper
             "
         ]));
     }
+
+    public function createJsonSetPredicate(array $data): string
+    {
+        $format = sprintf(
+            'JSON_SET(properties, %s)',
+            implode(',',
+                array_fill(0, count($data) * 2, '%s'))
+        );
+        $flatData = [];
+        foreach ($data as $key => $value) {
+            $flatData[] = "'$.$key'";
+            $flatData[] = match (gettype($value)) {
+                'string' => sprintf('"%s"', $value),
+                default => $value,
+            };
+        }
+        return sprintf($format, ...$flatData);
+    }
 }

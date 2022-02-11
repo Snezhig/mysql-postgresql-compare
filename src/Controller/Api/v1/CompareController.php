@@ -34,7 +34,7 @@ class CompareController extends AbstractController
     )]
     public function executeSelect(Request $request, SqlPredicateHelper $helper): JsonResponse
     {
-        $this->service->setWhereHelper($helper);
+        $this->service->setPredicateHelper($helper);
         $onlyPredicates = $request->get('only');
 
         if (is_array($onlyPredicates)) {

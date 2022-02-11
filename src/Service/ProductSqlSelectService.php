@@ -19,7 +19,7 @@ class ProductSqlSelectService
     ) {
     }
 
-    public function setWhereHelper(SqlPredicateHelper $helper): self
+    public function setPredicateHelper(SqlPredicateHelper $helper): self
     {
         $this->helper = $helper;
         return $this;
