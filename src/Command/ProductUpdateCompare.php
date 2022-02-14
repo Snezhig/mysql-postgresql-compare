@@ -2,6 +2,7 @@
 
 namespace App\Command;
 
+use App\Helper\Algebra\PercentageHelper;
 use App\Helper\MysqlPredicateHelper;
 use App\Helper\PostgresqlPredicateHelper;
 use App\Service\ProductSqlUpdateService;
@@ -9,6 +10,7 @@ use Faker\Factory;
 use Faker\Generator;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\Table;
+use Symfony\Component\Console\Helper\TableSeparator;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
@@ -48,7 +50,7 @@ class ProductUpdateCompare extends Command
             foreach ($helpers as $helper) {
                 $stack = $this->service
                     ->setPredicateHelper($helper)
-                    ->setPropertyKeys($value, 1000);
+                    ->setPropertyKeys($value, 1);
                 $valueResults[$helper->getConnectionName()] = [
                     'time' => current($stack->queries)['executionMS'],
                     'sql'  => current($stack->queries)['sql']
@@ -65,7 +67,9 @@ class ProductUpdateCompare extends Command
                 $time = $data['time'];
                 if ($type === $this->postgresqlPredicateHelper->getConnectionName()) {
                     $mysqlTime = $result[$this->mysqlPredicateHelper->getConnectionName()]['time'];
-                    $diff = round((1 - $time / $mysqlTime) * 100, 2);
+                    $diff = $time > $mysqlTime
+                        ? PercentageHelper::calcIncrease($time, $mysqlTime)
+                        : PercentageHelper::calcDecrease($mysqlTime, $time);
                     $time = "$time ({$diff}%)";
                 }
                 $table->addRow([
@@ -74,6 +78,7 @@ class ProductUpdateCompare extends Command
                     $this->formatSql($data['sql'])
                 ]);
             }
+            $table->addRow(new TableSeparator());
         }
 
         $table->render();

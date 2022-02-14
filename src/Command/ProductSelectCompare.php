@@ -2,10 +2,10 @@
 
 namespace App\Command;
 
+use App\Helper\Algebra\PercentageHelper;
 use App\Helper\MysqlPredicateHelper;
 use App\Helper\PostgresqlPredicateHelper;
 use App\Service\ProductSqlSelectService;
-use App\Setting\SqlCompareValueSetting;
 use JetBrains\PhpStorm\ArrayShape;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\Table;
@@ -95,14 +95,13 @@ class ProductSelectCompare extends Command
             $number = new TableCell($i + 1, ['rowspan' => 2]);
 
             foreach ($result as $type => $data) {
-                $diff = $type === 'postgresql'
-                    ? sprintf(
-                        " (%s%s)",
-                        round(
-                            (1 - $result['postgresql']['time'] / $result['mysql']['time']) * 100,
-                            2
-                        ), '%')
-                    : '';
+                $postgresTime = $result['postgresql']['time'];
+                $mysqlTime = $result['mysql']['time'];
+
+                $diff = $postgresTime > $mysqlTime
+                    ? PercentageHelper::calcIncrease($postgresTime, $mysqlTime)
+                    : PercentageHelper::calcDecrease($mysqlTime, $postgresTime);
+                $diff = $type === 'postgresql' ? sprintf(" (%s%s)", $diff, '%') : '';
 
                 $row = [
                     $type,
