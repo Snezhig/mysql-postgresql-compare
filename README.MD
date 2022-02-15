@@ -44,15 +44,63 @@ php bin/console app:product:update:compare
 ## Types
 
 * Path: `[GET]/api/compare/types` - return types
+* Response:
+
+```json
+{
+  "Mysql": "mysql",
+  "Postgresql": "postgres"
+}
+```
 
 ## Select
 
-* Path:
-    * `[GET]/api/compare/{type}/select/?values=<array>` - return where predicates for type with values
-    * `[POST]/api/compare/{type}/select/?values=<array>&?only=<array>` - return queries results
-* Query params:
-    * values = [int => integer, string => string, float => float]
-    * only = array[keys of predicates]
+### Path:
+
+* `[GET]/api/compare/{type}/select/?values=<array>` - return where predicates for type with values
+* `[POST]/api/compare/{type}/select/?values=<array>&?only=<array>` - return queries results
+
+### Query params:
+
+* values = [int => integer, string => string, float => float]
+* only = array[keys of predicates]
+
+### Examples:
+
+* Request: `[GET]/api/v1/compare/mysql/select?values[int]=4444`
+* Response:
+
+    ```json
+    {
+      "name_like": "name LIKE '%uo%'",
+      "json_int_eq": "JSON_CONTAINS(properties, '4444', '$.int_prop') = 1",
+      "json_int_gt": "JSON_EXTRACT(properties, '$.int_prop') > 4444",
+      "json_string_contains": "JSON_CONTAINS(properties, '\"4512\"', '$.string_prop') = 1",
+      "json_float_gt": "JSON_EXTRACT(properties, '$.float_prop') > 4512",
+      "name_like_json_int_lte": "name like '%us%' and JSON_EXTRACT(properties, '$.int_prop') <= 4444",
+      "name_like_json_int_lte_string_contains": "name like '%us%' and JSON_EXTRACT(properties, '$.int_prop') <= 4444 and JSON_CONTAINS(properties, '\"4512\"', '$.string_prop') = 1",
+      "json_float_gt_and_string": "JSON_EXTRACT(properties, '$.float_prop') > 4512 and JSON_CONTAINS(properties, '\"4512\"', '$.string_prop') = 1",
+      "json_float_gt_and_not_string": "JSON_EXTRACT(properties, '$.float_prop') > 4512 and JSON_CONTAINS(properties, '\"4512\"', '$.string_prop') = 0",
+      "json_float_gt_int_lte_string_like": "JSON_EXTRACT(properties, '$.float_prop') > 4512 and JSON_EXTRACT(properties, '$.int_prop') <= 4444 and JSON_EXTRACT(properties, '$.string_prop') like '%a%'"
+    }
+    ```
+
+* Request: `[POST]/api/v1/compare/mysql/select?values[int]=5432&only[]=json_int_eq`
+* Response:
+
+    ```json
+    {
+      "json_int_eq": {
+        "time": 0.820807933807373,
+        "sql": "SELECT id FROM product WHERE JSON_CONTAINS(properties, '5432', '$.int_prop') = 1 ORDER BY ID",
+        "data": [
+          {
+            "id": 7935
+          }
+        ]
+      }
+    }
+    ```
 
 ## Insert
 
@@ -81,7 +129,7 @@ php bin/console app:product:update:compare
 }
 ```
 
-To insert with one query: `batch: true`.
+To insert with one query: `batch = true`.
 
 ---
 
@@ -100,4 +148,4 @@ To insert with one query: `batch: true`.
 }
 ```
 
-To update all records: `limit: 0`
+To update all records: `limit = 0`
