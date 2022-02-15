@@ -26,10 +26,12 @@ class ProductInsertCompare extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $items = [
-            ['ext_props' => 0, 'batch' => false, 'count' => 5],
+            ['ext_props' => 0, 'batch' => false, 'count' => 3],
             ['ext_props' => 0, 'batch' => true, 'count' => 5],
-            ['ext_props' => 4000, 'batch' => false, 'count' => 5],
+            ['ext_props' => 0, 'batch' => true, 'count' => 1000],
+            ['ext_props' => 4000, 'batch' => false, 'count' => 3],
             ['ext_props' => 4000, 'batch' => true, 'count' => 5],
+            ['ext_props' => 4000, 'batch' => true, 'count' => 1000],
         ];
         $results = [];
 
@@ -98,10 +100,7 @@ class ProductInsertCompare extends Command
             $properties = [];
 
             for ($pIndex = 1; $pIndex <= $propsCount; $pIndex++) {
-                $properties["p_{$pIndex}"] = $faker->randomElement([
-                    $faker->randomFloat(2, 1, 100000),
-                    $faker->numberBetween(1, 10000),
-                    $faker->word
+                $properties["p_{$pIndex}"] = $faker->randomElement([''
                 ]);
             }
 

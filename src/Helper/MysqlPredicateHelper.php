@@ -3,6 +3,7 @@
 namespace App\Helper;
 
 use Doctrine\Common\Collections\ArrayCollection;
+use JsonException;
 
 class MysqlPredicateHelper extends AbstractSqlPredicateHelper
 {
@@ -61,21 +62,34 @@ class MysqlPredicateHelper extends AbstractSqlPredicateHelper
         ]));
     }
 
-    public function createJsonSetPredicate(array $data): string
+    /**
+     * @throws JsonException
+     */
+    public function createJsonUpdatePredicate(array $data): string
     {
-        $format = sprintf(
-            'JSON_SET(properties, %s)',
-            implode(',',
-                array_fill(0, count($data) * 2, '%s'))
-        );
-        $flatData = [];
-        foreach ($data as $key => $value) {
-            $flatData[] = "'$.$key'";
-            $flatData[] = match (gettype($value)) {
+        return match (count($data)) {
+            1 => $this->createJsonSetPredicate(array_key_first($data), current($data)),
+            default => $this->createJsonMergePatch($data)
+        };
+    }
+
+    private function createJsonSetPredicate(string $key, float|int|string $value): string
+    {
+        return sprintf(
+            "JSON_SET(properties, '$.%s', %s)",
+            $key,
+            match (gettype($value)) {
                 'string' => sprintf('"%s"', $value),
                 default => $value,
-            };
-        }
-        return sprintf($format, ...$flatData);
+            }
+        );
+    }
+
+    private function createJsonMergePatch(array $data): string
+    {
+        return sprintf(
+            "JSON_MERGE_PATCH(properties, '%s')",
+            json_encode($data, JSON_THROW_ON_ERROR)
+        );
     }
 }

@@ -26,7 +26,7 @@ class ProductSqlUpdateService
 
     public function setPropertyKeys(array $data, int $limit = 0): DebugStack
     {
-        $predicate = $this->helper->createJsonSetPredicate($data);
+        $predicate = $this->helper->createJsonUpdatePredicate($data);
         $manager = $this->registry->getManager();
         /**@var Connection $connection*/
         $connection = $this->registry->getConnection($this->helper->getConnectionName());

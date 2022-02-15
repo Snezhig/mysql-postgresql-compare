@@ -15,5 +15,5 @@ interface SqlPredicateHelper
 
     public function getValueSetting(): SqlCompareValueSetting;
 
-    public function createJsonSetPredicate(array $data): string;
+    public function createJsonUpdatePredicate(array $data): string;
 }

@@ -3,6 +3,7 @@
 namespace App\Helper;
 
 use Doctrine\Common\Collections\ArrayCollection;
+use JsonException;
 
 class PostgresqlPredicateHelper extends AbstractSqlPredicateHelper
 {
@@ -64,7 +65,7 @@ class PostgresqlPredicateHelper extends AbstractSqlPredicateHelper
         ]));
     }
 
-    public function createJsonSetPredicate(array $data): string
+    public function createJsonUpdatePredicate(array $data): string
     {
         return match (count($data)) {
             1 => $this->createJsonSet(array_key_first($data), current($data)),
@@ -84,6 +85,9 @@ class PostgresqlPredicateHelper extends AbstractSqlPredicateHelper
         );
     }
 
+    /**
+     * @throws JsonException
+     */
     private function createJsonMerge(array $data): string
     {
         return sprintf("properties || '%s'", json_encode($data, JSON_THROW_ON_ERROR));

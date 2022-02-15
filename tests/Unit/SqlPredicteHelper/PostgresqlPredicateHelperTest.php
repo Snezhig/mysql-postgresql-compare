@@ -13,7 +13,7 @@ class PostgresqlPredicateHelperTest extends AbstractSqlPredicateHelperTest
      */
     public function testCreateJsonSetPredicateSingle(array $value)
     {
-        $predicate = $this->helper->createJsonSetPredicate($value);
+        $predicate = $this->helper->createJsonUpdatePredicate($value);
         $sql = $this->createUpdatePropertySql($predicate);
         $this->explain($sql);
         $this->addToAssertionCount(1);

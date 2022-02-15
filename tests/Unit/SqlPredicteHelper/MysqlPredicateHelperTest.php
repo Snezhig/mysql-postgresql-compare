@@ -12,7 +12,7 @@ class MysqlPredicateHelperTest extends AbstractSqlPredicateHelperTest
 {
     public function testCreateJsonSetPredicate(): void
     {
-        $predicate = $this->helper->createJsonSetPredicate([
+        $predicate = $this->helper->createJsonUpdatePredicate([
             'int_string' => '32',
             'int'        => 23,
             'string'     => 'string_value',
