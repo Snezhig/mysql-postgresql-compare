@@ -72,7 +72,7 @@ class PostgresqlPredicateHelper extends AbstractSqlPredicateHelper
         };
     }
 
-    private function createJsonSet(string $key, string $value): string
+    private function createJsonSet(string $key, string|int|float $value): string
     {
         return sprintf(
             "jsonb_set_lax(properties, '{%s}', '%s', true)",

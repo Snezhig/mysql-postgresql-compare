@@ -50,7 +50,7 @@ class ProductUpdateCompare extends Command
             foreach ($helpers as $helper) {
                 $stack = $this->service
                     ->setPredicateHelper($helper)
-                    ->setPropertyKeys($value, 1);
+                    ->setPropertyKeys($value, 100);
                 $valueResults[$helper->getConnectionName()] = [
                     'time' => current($stack->queries)['executionMS'],
                     'sql'  => current($stack->queries)['sql']
