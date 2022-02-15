@@ -24,7 +24,7 @@ class ProductSqlUpdateService
         return $this;
     }
 
-    public function setPropertyKeys(array $data, int $limit = 0)
+    public function setPropertyKeys(array $data, int $limit = 0): DebugStack
     {
         $predicate = $this->helper->createJsonSetPredicate($data);
         $manager = $this->registry->getManager();
