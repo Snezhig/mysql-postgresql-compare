@@ -4,18 +4,20 @@ doctrine:
     connections:
       postgres:
         # configure these for your database server
-        host: postgres
-        dbname: '%env(resolve:DB_NAME)%'
-        user: '%env(resolve:DB_USER)%'
-        password: '%env(resolve:DB_PASSWORD)%'
+        host: '%env(resolve:POSTGRESQL_HOST)%'
+        dbname: '%env(resolve:POSTGRESQL_DB_NAME)%'
+        user: '%env(resolve:POSTGRESQL_DB_USER)%'
+        password: '%env(resolve:POSTGRESQL_DB_PASSWORD)%'
+        port: '%env(resolve:POSTGRESQL_DB_PORT)%'
         driver: 'pdo_pgsql'
 
       mysql:
         # configure these for your database server
-        host: mysql
-        dbname: '%env(resolve:DB_NAME)%'
-        user: '%env(resolve:DB_USER)%'
-        password: '%env(resolve:DB_PASSWORD)%'
+        host: '%env(resolve:MYSQL_HOST)%'
+        dbname: '%env(resolve:MYSQL_DB_NAME)%'
+        user: '%env(resolve:MYSQL_DB_USER)%'
+        password: '%env(resolve:MYSQL_DB_PASSWORD)%'
+        port: '%env(resolve:MYSQL_DB_PORT)%'
         driver: 'pdo_mysql'
   orm:
     default_entity_manager: postgres
